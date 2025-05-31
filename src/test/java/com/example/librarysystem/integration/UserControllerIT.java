@@ -2,7 +2,6 @@ package com.example.librarysystem.integration;
 
 import com.example.librarysystem.entity.User;
 import com.example.librarysystem.repository.UserRepository;
-// import com.example.librarysystem.service.UserService; // Nie potrzebujemy bezpośrednio serwisu w teście IT kontrolera
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,19 +9,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder; // Do przygotowania zahashowanych haseł
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -38,6 +38,8 @@ public class UserControllerIT {
             .withPassword("testpass");
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
+
     private MockMvc mockMvc;
 
     @Autowired
@@ -47,7 +49,7 @@ public class UserControllerIT {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // Wstrzykujemy PasswordEncoder do hashowania haseł dla testów
+    private PasswordEncoder passwordEncoder;
 
     private User adminUser;
     private User regularUser;
@@ -58,16 +60,21 @@ public class UserControllerIT {
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
         registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.flyway.enabled", () -> false);
     }
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll(); // Czyścimy repozytorium przed każdym testem
+        this.mockMvc = MockMvcBuilders
+                .webAppContextSetup(this.webApplicationContext)
+                .apply(springSecurity())
+                .build();
 
-        // Tworzymy przykładowych użytkowników dla niektórych testów
+        userRepository.deleteAll();
+
         adminUser = new User();
         adminUser.setUsername("adminIT");
-        adminUser.setPassword(passwordEncoder.encode("password")); // Hashujemy hasło
+        adminUser.setPassword(passwordEncoder.encode("password"));
         adminUser.setRole("ROLE_ADMIN");
         userRepository.save(adminUser);
 
@@ -80,21 +87,22 @@ public class UserControllerIT {
 
     @Test
     void shouldRegisterNewUser() throws Exception {
-        User newUser = new User();
-        newUser.setUsername("newUserRegister");
-        newUser.setPassword("plainPassword123"); // Hasło w formie jawnej, serwis je zahashuje
-        newUser.setRole("ROLE_USER"); // Rola może być też ustawiana domyślnie w serwisie
+        // Budujemy JSON ręcznie, aby pole "password" znalazło się w żądaniu
+        String userJson = """
+            {
+                "username": "newUserRegister",
+                "password": "plainPassword123",
+                "role": "ROLE_USER"
+            }
+            """;
 
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(newUser)))
+                        .content(userJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(notNullValue())))
                 .andExpect(jsonPath("$.username", is("newUserRegister")))
-                .andExpect(jsonPath("$.password").doesNotExist()); // WAŻNE: Hasło nie powinno być zwracane!
-        // To wymaga DTO lub odpowiedniej konfiguracji Jacksona (@JsonIgnore)
-        // Jeśli encja User jest zwracana bezpośrednio, ten test może failować
-        // lub trzeba go dostosować do aktualnego zachowania
+                .andExpect(jsonPath("$.password").doesNotExist());
     }
 
     @Test
@@ -103,9 +111,9 @@ public class UserControllerIT {
         mockMvc.perform(get("/api/users")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2))) // adminIT i userIT
+                .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].username").exists())
-                .andExpect(jsonPath("$[0].password").doesNotExist()) // Spodziewamy się braku hasła
+                .andExpect(jsonPath("$[0].password").doesNotExist())
                 .andExpect(jsonPath("$[1].username").exists())
                 .andExpect(jsonPath("$[1].password").doesNotExist());
     }
@@ -129,27 +137,25 @@ public class UserControllerIT {
                 .andExpect(jsonPath("$.password").doesNotExist());
     }
 
-    // Test dla użytkownika próbującego pobrać własne dane (wymagałby bardziej złożonej logiki @PreAuthorize)
-    // @Test
-    // @WithMockUser(username = "userIT", roles = {"USER"})
-    // void shouldGetUserById_whenGettingSelf() throws Exception { ... }
-
-
     @Test
     @WithMockUser(username = "adminIT", roles = {"ADMIN"})
     void shouldUpdateUser_whenAdmin() throws Exception {
         User userDetailsToUpdate = new User();
         userDetailsToUpdate.setUsername("userIT_updated");
-        // Hasło nie jest aktualizowane w tym teście, aby sprawdzić aktualizację innych pól
-        // Jeśli chcemy aktualizować hasło, trzeba je podać w formie jawnej.
-        userDetailsToUpdate.setRole("ROLE_USER"); // Rola może pozostać taka sama lub być zmieniona
+        // Jeśli chcemy zaktualizować hasło, należy je tu podać:
+        // userDetailsToUpdate.setPassword("newPlainPassword");
+        userDetailsToUpdate.setRole("ROLE_USER");
+
+        // Serializacja obiektu bez pola "password" jest ok w tym przypadku,
+        // bo w teście nie zmieniamy hasła.
+        String updateJson = objectMapper.writeValueAsString(userDetailsToUpdate);
 
         mockMvc.perform(put("/api/users/" + regularUser.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDetailsToUpdate)))
+                        .content(updateJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username", is("userIT_updated")))
-                .andExpect(jsonPath("$.password").doesNotExist()); // Hasło nie powinno być zwracane
+                .andExpect(jsonPath("$.password").doesNotExist());
     }
 
     @Test
@@ -158,14 +164,13 @@ public class UserControllerIT {
         mockMvc.perform(delete("/api/users/" + regularUser.getId()))
                 .andExpect(status().isNoContent());
 
-        // Weryfikacja, czy użytkownik został usunięty
         assertFalse(userRepository.findById(regularUser.getId()).isPresent());
     }
 
     @Test
     @WithMockUser(username = "userIT", roles = {"USER"})
     void shouldFailToDeleteUser_whenRegularUser() throws Exception {
-        mockMvc.perform(delete("/api/users/" + adminUser.getId())) // Próba usunięcia innego użytkownika
+        mockMvc.perform(delete("/api/users/" + adminUser.getId()))
                 .andExpect(status().isForbidden());
     }
 }

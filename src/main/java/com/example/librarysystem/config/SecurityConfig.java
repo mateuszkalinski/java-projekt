@@ -2,14 +2,12 @@ package com.example.librarysystem.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // <--- NOWY IMPORT
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher; // <--- NOWY IMPORT
-import static org.springframework.security.config.Customizer.withDefaults; // Dla httpBasic lub formLogin z domyślnymi
 
 @Configuration
 @EnableWebSecurity
@@ -27,30 +25,40 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/users/register").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+
+                        // GET /api/books i GET /api/books/{co‐kolwiek} – OK
                         .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/borrowings/borrow", "/api/borrowings/**/return").hasAnyRole("USER", "ADMIN")
+
+                        // Dwa osobne endpointy: /api/borrowings/borrow  oraz  /api/borrowings/{id}/return
+                        .requestMatchers("/api/borrowings/borrow").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/borrowings/*/return").hasAnyRole("USER", "ADMIN")
+
+                        // GET /api/borrowings/user/{co‐kolwiek} – OK, bo * to odpowiada jednemu poziomowi ścieżki
                         .requestMatchers("/api/borrowings/user/**").hasAnyRole("USER", "ADMIN")
+
+                        // Dla ADMINa: tworzenie, edycja, usuwanie książek
                         .requestMatchers(HttpMethod.POST, "/api/books").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/books/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasRole("ADMIN") // Pamiętaj, że GET /api/users/{id} może być dla usera samego siebie
+
+                        // Dla ADMINa wszelkie operacje na użytkownikach
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                        // Dla ADMINa lista wszystkich wypożyczeń "/api/borrowings"
                         .requestMatchers("/api/borrowings").hasRole("ADMIN")
+
+                        // pozostałe żądania – uwierzytelnienie
                         .anyRequest().authenticated()
                 )
-                .formLogin(formLogin -> formLogin // Używamy domyślnego formularza logowania Springa
-                        // .loginPage("/my-custom-login") // Usunięte lub zakomentowane, jeśli nie masz własnej strony
-                        .defaultSuccessUrl("/", true) // Przekieruj na główną ścieżkę po sukcesie
+                .formLogin(formLogin -> formLogin
+                        // Domyślny formularz
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/?logout=true") // Przekieruj na główną ścieżkę z info o wylogowaniu
+                        .logoutSuccessUrl("/?logout=true")
                         .permitAll()
                 );
-        // Jeśli chcesz umożliwić testowanie API np. przez Postmana bez formularza logowania,
-        // a jedynie przez podstawowe uwierzytelnianie HTTP, możesz zostawić lub dodać:
-        // .httpBasic(withDefaults());
-        // Jednak formLogin jest bardziej typowe dla interakcji przez przeglądarkę.
-
         return http.build();
     }
 }

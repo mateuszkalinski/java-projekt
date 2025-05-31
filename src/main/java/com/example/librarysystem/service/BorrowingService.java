@@ -6,8 +6,8 @@ import com.example.librarysystem.entity.User;
 import com.example.librarysystem.repository.BookRepository;
 import com.example.librarysystem.repository.BorrowingRepository;
 import com.example.librarysystem.repository.UserRepository;
-import com.example.librarysystem.service.policy.LoanPolicy; // <--- IMPORT
-import org.springframework.beans.factory.annotation.Qualifier; // <--- IMPORT
+import com.example.librarysystem.service.policy.LoanPolicy;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,18 +20,17 @@ public class BorrowingService {
     private final BorrowingRepository borrowingRepository;
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
-    private final LoanPolicy loanPolicy; // <--- Pole dla polityki
+    private final LoanPolicy loanPolicy;
 
-    // Wstrzykujemy konkretną politykę przez @Qualifier lub Spring wybierze, jeśli jest tylko jedna
-    // lub oznaczona jako @Primary.
+    // Wstrzykujemy politykę pożyczek (np. standardLoanPolicy)
     public BorrowingService(BorrowingRepository borrowingRepository,
                             UserRepository userRepository,
                             BookRepository bookRepository,
-                            @Qualifier("standardLoanPolicy") LoanPolicy loanPolicy) { // <--- Wstrzyknięcie
+                            @Qualifier("standardLoanPolicy") LoanPolicy loanPolicy) {
         this.borrowingRepository = borrowingRepository;
         this.userRepository = userRepository;
         this.bookRepository = bookRepository;
-        this.loanPolicy = loanPolicy; // <--- Przypisanie
+        this.loanPolicy = loanPolicy;
     }
 
     @Transactional
@@ -41,11 +40,9 @@ public class BorrowingService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
 
-        // TODO: Logika sprawdzająca dostępność książki (np. availableCopies)
-
+        // TODO: Dodać logiczną weryfikację dostępności (np. book.getCopiesAvailable())
         LocalDate borrowDate = LocalDate.now();
-        // Użycie wstrzykniętej polityki do obliczenia terminu zwrotu
-        LocalDate dueDate = this.loanPolicy.calculateDueDate(borrowDate, book, user); // <--- Użycie
+        LocalDate dueDate = loanPolicy.calculateDueDate(borrowDate, book, user);
 
         Borrowing borrowing = new Borrowing(user, book, borrowDate, dueDate);
         return borrowingRepository.save(borrowing);
@@ -60,7 +57,7 @@ public class BorrowingService {
             throw new IllegalStateException("Book already returned on " + borrowing.getReturnDate());
         }
         borrowing.setReturnDate(LocalDate.now());
-        // TODO: Logika aktualizacji availableCopies w Book
+        // TODO: Tu dodać np. aktualizację dostępnych kopii książki
         return borrowingRepository.save(borrowing);
     }
 
@@ -73,6 +70,6 @@ public class BorrowingService {
     public List<Borrowing> getBorrowingsForUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return borrowingRepository.findByUser(user); // <--- ZMIANA TUTAJ
+        return borrowingRepository.findByUser(user);
     }
 }

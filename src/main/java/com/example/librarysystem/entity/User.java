@@ -1,5 +1,7 @@
 package com.example.librarysystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +22,7 @@ public class User {
     private String username;
 
     @Column(nullable = false) // Hasło nie powinno być puste
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password; // Dodajemy pole na hasło
 
     @Column(nullable = false) // Rola nie powinna być pusta

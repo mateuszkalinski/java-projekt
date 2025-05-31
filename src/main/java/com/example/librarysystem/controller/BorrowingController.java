@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,10 +25,12 @@ public class BorrowingController {
 
     @Operation(summary = "Borrow a book", description = "Creates a new borrowing record for a user and a book.")
     @PostMapping("/borrow")
-    // @PreAuthorize("hasRole('USER') or hasRole('ADMIN')") // Użytkownik lub admin może zainicjować wypożyczenie
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')") // Użytkownik lub admin może zainicjować wypożyczenie
     public ResponseEntity<?> borrowBook(
-            @Parameter(description = "ID of the user borrowing the book", required = true) @RequestParam Long userId,
-            @Parameter(description = "ID of the book to be borrowed", required = true) @RequestParam Long bookId) {
+            @Parameter(description = "ID of the user borrowing the book", required = true)
+            @RequestParam Long userId,
+            @Parameter(description = "ID of the book to be borrowed", required = true)
+            @RequestParam Long bookId) {
         try {
             Borrowing borrowing = borrowingService.borrowBook(userId, bookId);
             return new ResponseEntity<>(borrowing, HttpStatus.CREATED);
@@ -39,7 +42,7 @@ public class BorrowingController {
 
     @Operation(summary = "Return a book", description = "Marks a borrowed book as returned.")
     @PutMapping("/{borrowingId}/return")
-    // @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> returnBook(
             @Parameter(description = "ID of the borrowing record to be marked as returned", required = true)
             @PathVariable Long borrowingId) {
@@ -54,27 +57,22 @@ public class BorrowingController {
 
     @Operation(summary = "Get all borrowing records", description = "Retrieve a list of all borrowing records. (Admin only - to be secured)")
     @GetMapping
-    // @PreAuthorize("hasRole('ADMIN')")
-    public List<Borrowing> getAllBorrowings() {
-        return borrowingService.getAllBorrowings();
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Borrowing>> getAllBorrowings() {
+        List<Borrowing> list = borrowingService.getAllBorrowings();
+        return ResponseEntity.ok(list);
     }
 
     @Operation(summary = "Get borrowing records for a specific user", description = "Retrieve all borrowing records for a given user. (Admin or self - to be secured)")
     @GetMapping("/user/{userId}")
-    // @PreAuthorize("hasRole('ADMIN') or @userService.isSelf(authentication, #userId)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ResponseEntity<?> getBorrowingsForUser(
             @Parameter(description = "ID of the user whose borrowings are to be retrieved", required = true)
             @PathVariable Long userId) {
         try {
-            // Pamiętaj, że metoda getBorrowingsForUser w BorrowingService wymagała dopracowania
-            // (np. przez dodanie metody do repozytorium).
-            // Na razie może rzucać UnsupportedOperationException.
             List<Borrowing> borrowings = borrowingService.getBorrowingsForUser(userId);
             return ResponseEntity.ok(borrowings);
-        } catch (UnsupportedOperationException e) {
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(e.getMessage());
-        }
-        catch (RuntimeException e) { // Np. User not found
+        } catch (RuntimeException e) { // Np. User not found
             return ResponseEntity.notFound().build();
         }
     }

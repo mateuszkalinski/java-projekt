@@ -1,9 +1,7 @@
 package com.example.librarysystem.integration;
 
 import com.example.librarysystem.entity.Book;
-import com.example.librarysystem.repository.BookRepository; // Zmieniamy ProjectRepository na BookRepository
-import com.example.librarysystem.entity.User;
-import com.example.librarysystem.repository.UserRepository;
+import com.example.librarysystem.repository.BookRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,42 +9,52 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser; // <--- NOWY IMPORT dla Spring Security Test
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-// import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*; // Dla bardziej złożonych scenariuszy security
 
+/**
+ * Integracyjne testy kontrolera BookController.
+ *
+ * – Tworzenie nowej książki → ADMIN (201).
+ * – Próba stworzenia → USER (403).
+ * – GET /api/books/{id} → USER (200), ANONYMOUS → 302.
+ * – GET /api/books → USER (200), ANONYMOUS → 302.
+ * – PUT/DELETE → ADMIN ok (200/204), USER → 403, ANONYMOUS → 302.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
-public class BookControllerIT { // Zmieniamy nazwę klasy
+public class BookControllerIT {
 
     @Container
-    public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine")
-            .withDatabaseName("testdb_library") // Możemy zmienić nazwę bazy dla spójności
-            .withUsername("testuser")
-            .withPassword("testpass");
+    public static PostgreSQLContainer<?> postgreSQLContainer =
+            new PostgreSQLContainer<>("postgres:15-alpine")
+                    .withDatabaseName("testdb_library_book")
+                    .withUsername("testuser")
+                    .withPassword("testpass");
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
+
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
-    private BookRepository bookRepository; // Zmieniamy na BookRepository
-
-    // @Autowired // Jeśli potrzebujesz tworzyć użytkowników w setUp np. dla testowania autoryzacji
-    // private UserRepository userRepository;
+    private BookRepository bookRepository;
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
@@ -54,17 +62,21 @@ public class BookControllerIT { // Zmieniamy nazwę klasy
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
         registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        registry.add("spring.flyway.enabled", () -> false);
     }
 
     @BeforeEach
     void setUp() {
+        this.mockMvc = MockMvcBuilders
+                .webAppContextSetup(this.webApplicationContext)
+                .apply(springSecurity())
+                .build();
+
         bookRepository.deleteAll();
-        // userRepository.deleteAll(); // Jeśli czyścisz też użytkowników
-        // Możesz tu stworzyć domyślnego admina/użytkownika, jeśli testy tego wymagają
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"}) // Symulujemy zalogowanego admina
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     void shouldCreateNewBook_whenAdmin() throws Exception {
         Book newBook = new Book();
         newBook.setTitle("Nowa Książka Integracyjna");
@@ -81,29 +93,27 @@ public class BookControllerIT { // Zmieniamy nazwę klasy
     }
 
     @Test
-    @WithMockUser(username = "user", roles = {"USER"}) // Symulujemy zwykłego użytkownika
+    @WithMockUser(username = "user", roles = {"USER"})
     void shouldFailToCreateNewBook_whenUser() throws Exception {
         Book newBook = new Book();
         newBook.setTitle("Książka Użytkownika");
         newBook.setAuthor("Autor Użytkownik");
         newBook.setIsbn("888-1234567890");
 
-        // Endpoint POST /api/books jest zabezpieczony dla ADMINA
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newBook)))
-                .andExpect(status().isForbidden()); // Oczekujemy błędu 403 Forbidden
+                .andExpect(status().isForbidden());
     }
 
-
     @Test
-    @WithMockUser(username = "user", roles = {"USER"}) // Dostęp dla USER i ADMIN
+    @WithMockUser(username = "user", roles = {"USER"})
     void shouldGetBookById() throws Exception {
         Book bookToCreate = new Book();
         bookToCreate.setTitle("Książka Do Odczytu");
         bookToCreate.setAuthor("Autor Do Odczytu");
         bookToCreate.setIsbn("777-1234567890");
-        Book savedBook = bookRepository.save(bookToCreate); // Zapisujemy bezpośrednio przez repo
+        Book savedBook = bookRepository.save(bookToCreate);
 
         mockMvc.perform(get("/api/books/" + savedBook.getId())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -145,7 +155,7 @@ public class BookControllerIT { // Zmieniamy nazwę klasy
 
         Book updatedBookDetails = new Book();
         updatedBookDetails.setTitle("Zaktualizowana Nazwa Książki");
-        updatedBookDetails.setAuthor(savedBook.getAuthor()); // Możemy zaktualizować tylko niektóre pola
+        updatedBookDetails.setAuthor(savedBook.getAuthor());
         updatedBookDetails.setIsbn(savedBook.getIsbn());
 
         mockMvc.perform(put("/api/books/" + savedBook.getId())
@@ -188,10 +198,11 @@ public class BookControllerIT { // Zmieniamy nazwę klasy
 
         mockMvc.perform(get("/api/books/" + savedBook.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound()); // Zakładając, że GET na usunięty zasób zwraca 404
+                .andExpect(status().isNotFound());
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"USER"})
     void shouldFailToDeleteBook_whenUser() throws Exception {
         Book bookToCreate = new Book();
         bookToCreate.setTitle("Książka Do Usunięcia przez Usera");
@@ -203,7 +214,6 @@ public class BookControllerIT { // Zmieniamy nazwę klasy
                 .andExpect(status().isForbidden());
     }
 
-    // Testy na dostęp anonimowy (niezalogowany)
     @Test
     void shouldFailToCreateBook_whenAnonymous() throws Exception {
         Book newBook = new Book();
@@ -214,17 +224,13 @@ public class BookControllerIT { // Zmieniamy nazwę klasy
         mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newBook)))
-                .andExpect(status().isUnauthorized()); // Lub 302 Found (przekierowanie do logowania), jeśli formLogin jest głównym mechanizmem
-        // Jeśli używasz .httpBasic() lub .oauth2ResourceServer(), 401 jest bardziej prawdopodobne dla API
+                .andExpect(status().isFound()); // 302 – przekierowanie do logowania
     }
 
     @Test
-    void shouldGetBooks_whenAnonymous_ifEndpointIsPublic() throws Exception {
-        // W naszej konfiguracji SecurityConfig, GET /api/books jest dla USER lub ADMIN
-        // więc anonimowy dostęp powinien być zabroniony (401 lub przekierowanie)
+    void shouldFailToGetBooks_whenAnonymous() throws Exception {
         mockMvc.perform(get("/api/books")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized()); // Lub 302 Found
+                .andExpect(status().isFound()); // 302 – przekierowanie do logowania
     }
-
 }

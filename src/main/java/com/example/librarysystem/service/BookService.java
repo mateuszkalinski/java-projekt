@@ -35,11 +35,12 @@ public class BookService {
 
     @Transactional // Operacje zapisu/modyfikacji powinny być transakcyjne
     public Book addBook(Book book) {
-        // Tutaj można dodać walidację, np. czy książka o danym ISBN już istnieje
-        // Optional<Book> existingBook = bookRepository.findByIsbn(book.getIsbn());
-        // if (existingBook.isPresent()) {
-        //     throw new IllegalStateException("Book with ISBN " + book.getIsbn() + " already exists.");
-        // }
+        if (book.getIsbn() != null) { // Dodajmy sprawdzenie, czy ISBN jest ustawiony
+            Optional<Book> existingBook = bookRepository.findByIsbn(book.getIsbn());
+            if (existingBook.isPresent()) {
+                throw new IllegalStateException("Book with ISBN " + book.getIsbn() + " already exists.");
+            }
+        }
         return bookRepository.save(book);
     }
 

@@ -7,7 +7,6 @@ import com.example.librarysystem.repository.BookRepository;
 import com.example.librarysystem.repository.BorrowingRepository;
 import com.example.librarysystem.repository.UserRepository;
 import com.example.librarysystem.service.policy.LoanPolicy;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,9 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-// import org.mockito.junit.jupiter.MockitoSettings; // Jeśli zdecydujesz się na lenient
-// import org.mockito.quality.Strictness; // Jeśli zdecydujesz się na lenient
-
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -29,7 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-// @MockitoSettings(strictness = Strictness.LENIENT) // Opcjonalnie, jeśli chcesz być mniej rygorystyczny globalnie
 class BorrowingServiceTest {
 
     @Mock
@@ -51,12 +46,12 @@ class BorrowingServiceTest {
     private Book book;
     private Borrowing borrowing1;
     private LocalDate today;
-    private LocalDate dueDateFromPolicy; // Zmieniona nazwa dla jasności
+    private LocalDate dueDateFromPolicy;
 
     @BeforeEach
     void setUp() {
         today = LocalDate.now();
-        dueDateFromPolicy = today.plusDays(14); // Przykładowa data z polityki
+        dueDateFromPolicy = today.plusDays(14);
 
         user = new User();
         user.setId(1L);
@@ -69,20 +64,17 @@ class BorrowingServiceTest {
         book.setAuthor("Test Author");
         book.setIsbn("1234567890");
 
-        // borrowing1 jest teraz inicjalizowany w testach, które go używają, lub tutaj bez dueDate z polityki
-        // Inicjalizujemy go tu tylko częściowo, reszta w testach
         borrowing1 = new Borrowing();
         borrowing1.setId(1L);
         borrowing1.setUser(user);
         borrowing1.setBook(book);
         borrowing1.setBorrowDate(today);
-        // dueDate będzie ustawiane przez mock loanPolicy w konkretnych testach
+        // dueDate wypełniamy w poszczególnych testach
     }
 
     @Test
     @DisplayName("borrowBook - powinien pomyślnie wypożyczyć książkę")
     void testBorrowBook_success() {
-        // Mockowanie loanPolicy specyficzne dla tego testu
         when(loanPolicy.calculateDueDate(any(LocalDate.class), any(Book.class), any(User.class)))
                 .thenReturn(dueDateFromPolicy);
 
@@ -90,11 +82,9 @@ class BorrowingServiceTest {
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
         when(borrowingRepository.save(any(Borrowing.class))).thenAnswer(invocation -> {
             Borrowing b = invocation.getArgument(0);
-            // Symulujemy, że ID jest nadawane przy zapisie, jeśli jeszcze nie ma
             if (b.getId() == null) {
-                b.setId(2L); // Przykładowe ID
+                b.setId(2L);
             }
-            // Upewniamy się, że serwis poprawnie przekazuje daty
             assertEquals(today, b.getBorrowDate());
             assertEquals(dueDateFromPolicy, b.getDueDate());
             return b;
@@ -118,7 +108,6 @@ class BorrowingServiceTest {
     @Test
     @DisplayName("borrowBook - powinien rzucić wyjątek, gdy użytkownik nie istnieje")
     void testBorrowBook_userNotFound() {
-        // loanPolicy.calculateDueDate nie będzie wywołane, więc nie ma potrzeby go tu mockować
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
@@ -128,13 +117,12 @@ class BorrowingServiceTest {
 
         verify(bookRepository, never()).findById(anyLong());
         verify(borrowingRepository, never()).save(any(Borrowing.class));
-        verify(loanPolicy, never()).calculateDueDate(any(), any(), any()); // Sprawdzamy, czy nie było wywołania
+        verify(loanPolicy, never()).calculateDueDate(any(), any(), any());
     }
 
     @Test
     @DisplayName("borrowBook - powinien rzucić wyjątek, gdy książka nie istnieje")
     void testBorrowBook_bookNotFound() {
-        // loanPolicy.calculateDueDate nie będzie wywołane
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(bookRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -142,17 +130,16 @@ class BorrowingServiceTest {
             borrowingService.borrowBook(1L, 1L);
         });
         assertEquals("Book not found with id: 1", exception.getMessage());
+
         verify(borrowingRepository, never()).save(any(Borrowing.class));
         verify(loanPolicy, never()).calculateDueDate(any(), any(), any());
     }
 
-
     @Test
     @DisplayName("returnBook - powinien pomyślnie zwrócić książkę")
     void testReturnBook_success() {
-        // loanPolicy.calculateDueDate nie jest tu potrzebne
-        borrowing1.setDueDate(dueDateFromPolicy); // Ustawiamy jakąś datę zwrotu dla kompletności obiektu
-        borrowing1.setReturnDate(null); // Upewniamy się, że nie jest zwrócona
+        borrowing1.setDueDate(dueDateFromPolicy);
+        borrowing1.setReturnDate(null);
         when(borrowingRepository.findById(1L)).thenReturn(Optional.of(borrowing1));
         when(borrowingRepository.save(any(Borrowing.class))).thenReturn(borrowing1);
 
@@ -167,7 +154,6 @@ class BorrowingServiceTest {
     @Test
     @DisplayName("returnBook - powinien rzucić wyjątek, gdy wypożyczenie nie istnieje")
     void testReturnBook_borrowingNotFound() {
-        // loanPolicy.calculateDueDate nie jest tu potrzebne
         when(borrowingRepository.findById(1L)).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
@@ -180,9 +166,8 @@ class BorrowingServiceTest {
     @Test
     @DisplayName("returnBook - powinien rzucić wyjątek, gdy książka już została zwrócona")
     void testReturnBook_alreadyReturned() {
-        // loanPolicy.calculateDueDate nie jest tu potrzebne
         borrowing1.setDueDate(dueDateFromPolicy);
-        borrowing1.setReturnDate(today.minusDays(1)); // Książka już zwrócona
+        borrowing1.setReturnDate(today.minusDays(1));
         when(borrowingRepository.findById(1L)).thenReturn(Optional.of(borrowing1));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
@@ -195,10 +180,9 @@ class BorrowingServiceTest {
     @Test
     @DisplayName("getAllBorrowings - powinien zwrócić listę wszystkich wypożyczeń")
     void testGetAllBorrowings() {
-        // loanPolicy.calculateDueDate nie jest tu potrzebne
         Borrowing borrowing2 = new Borrowing(user, book, today.minusDays(5), today.plusDays(9));
         borrowing2.setId(2L);
-        borrowing1.setDueDate(dueDateFromPolicy); // Uzupełnienie borrowing1
+        borrowing1.setDueDate(dueDateFromPolicy);
         when(borrowingRepository.findAll()).thenReturn(Arrays.asList(borrowing1, borrowing2));
 
         List<Borrowing> borrowings = borrowingService.getAllBorrowings();
@@ -212,8 +196,7 @@ class BorrowingServiceTest {
     @Test
     @DisplayName("getBorrowingsForUser - powinien zwrócić wypożyczenia dla danego użytkownika")
     void testGetBorrowingsForUser_success() {
-        // loanPolicy.calculateDueDate nie jest tu potrzebne
-        borrowing1.setDueDate(dueDateFromPolicy); // Uzupełnienie borrowing1
+        borrowing1.setDueDate(dueDateFromPolicy);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(borrowingRepository.findByUser(user)).thenReturn(Arrays.asList(borrowing1));
 
@@ -230,7 +213,6 @@ class BorrowingServiceTest {
     @Test
     @DisplayName("getBorrowingsForUser - powinien rzucić wyjątek, gdy użytkownik nie istnieje")
     void testGetBorrowingsForUser_userNotFound() {
-        // loanPolicy.calculateDueDate nie jest tu potrzebne
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
