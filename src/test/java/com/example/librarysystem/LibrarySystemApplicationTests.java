@@ -1,20 +1,16 @@
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
+package com.example.librarysystem;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+// Importuj tylko to, co jest potrzebne, jeśli testujesz konkretne profile
+// import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@org.springframework.boot.autoconfigure.EnableAutoConfiguration(exclude = {
-        DataSourceAutoConfiguration.class,
-        DataSourceTransactionManagerAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        FlywayAutoConfiguration.class
-})
+// @ActiveProfiles("test") // Jeśli masz profil 'test' skonfigurowany np. z H2
 class LibrarySystemApplicationTests {
 
     @Test
     void contextLoads() {
+        // Ten test przejdzie, jeśli kontekst aplikacji załaduje się bez błędów
     }
 }

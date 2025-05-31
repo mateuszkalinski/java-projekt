@@ -10,11 +10,12 @@ services:
       db:
         condition: service_healthy # Czeka, aż baza danych będzie gotowa
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/task_manager
+      # ZMIENIONA NAZWA BAZY DANYCH W URL
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/library_system_db
       # 'db' to nazwa serwisu bazy danych zdefiniowana poniżej
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=admin # Przykładowe hasło, możesz zmienić
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update # Hibernate spróbuje zaktualizować schemat
 
   db:
     image: postgres:15-alpine # Używa oficjalnego obrazu PostgreSQL
@@ -24,11 +25,13 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=admin # Musi być takie samo jak SPRING_DATASOURCE_PASSWORD w serwisie 'app'
-      - POSTGRES_DB=task_manager # Nazwa bazy danych, która zostanie utworzona
+      # ZMIENIONA NAZWA BAZY DANYCH
+      - POSTGRES_DB=library_system_db # Nazwa bazy danych, która zostanie utworzona
     volumes:
       - postgres_data:/var/lib/postgresql/data # Utrwala dane bazy danych
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d task_manager"]
+      # ZMIENIONA NAZWA BAZY DANYCH W HEALTHCHECK
+      test: ["CMD-SHELL", "pg_isready -U postgres -d library_system_db"]
       interval: 10s
       timeout: 5s
       retries: 5
