@@ -69,7 +69,10 @@ public class BorrowingService {
         return borrowingRepository.findAll();
     }
 
-    // ... reszta metod ...
-    // getBorrowingsForUser - pamiętaj, aby zaimplementować dedykowaną metodę w repozytorium
-    // lub ulepszyć logikę pobierania.
+    @Transactional(readOnly = true)
+    public List<Borrowing> getBorrowingsForUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        return borrowingRepository.findByUser(user); // <--- ZMIANA TUTAJ
+    }
 }
