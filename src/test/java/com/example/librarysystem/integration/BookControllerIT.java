@@ -1,8 +1,9 @@
 package com.example.librarysystem.integration;
 
 import com.example.librarysystem.entity.Book;
+import com.example.librarysystem.repository.BookRepository; // Zmieniamy ProjectRepository na BookRepository
 import com.example.librarysystem.entity.User;
-import com.example.librarysystem.repository.BookRepository;
+import com.example.librarysystem.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,29 +11,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser; // <--- NOWY IMPORT dla Spring Security Test
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-// Dodaj ten import dla .andDo(print())
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+// import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*; // Dla bardziej złożonych scenariuszy security
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
-public class BookControllerIT {
+public class BookControllerIT { // Zmieniamy nazwę klasy
 
     @Container
     public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine")
-            .withDatabaseName("testdb")
+            .withDatabaseName("testdb_library") // Możemy zmienić nazwę bazy dla spójności
             .withUsername("testuser")
             .withPassword("testpass");
 
@@ -43,7 +43,10 @@ public class BookControllerIT {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private BookRepository bookRepository;
+    private BookRepository bookRepository; // Zmieniamy na BookRepository
+
+    // @Autowired // Jeśli potrzebujesz tworzyć użytkowników w setUp np. dla testowania autoryzacji
+    // private UserRepository userRepository;
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
@@ -51,198 +54,177 @@ public class BookControllerIT {
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
         registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.properties.hibernate.show_sql", () -> "true");
-        registry.add("spring.jpa.properties.hibernate.format_sql", () -> "true");
     }
 
     @BeforeEach
     void setUp() {
         bookRepository.deleteAll();
+        // userRepository.deleteAll(); // Jeśli czyścisz też użytkowników
+        // Możesz tu stworzyć domyślnego admina/użytkownika, jeśli testy tego wymagają
     }
 
     @Test
-    void shouldCreateNewProject() throws Exception {
-        Book newProject = new Book();
-        newProject.setName("Nowy Projekt Integracyjny");
+    @WithMockUser(username = "admin", roles = {"ADMIN"}) // Symulujemy zalogowanego admina
+    void shouldCreateNewBook_whenAdmin() throws Exception {
+        Book newBook = new Book();
+        newBook.setTitle("Nowa Książka Integracyjna");
+        newBook.setAuthor("Autor Testowy");
+        newBook.setIsbn("999-1234567890");
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/projects/create")
+        mockMvc.perform(post("/api/books")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(newProject)))
+                        .content(objectMapper.writeValueAsString(newBook)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(notNullValue())))
-                .andExpect(jsonPath("$.name", is("Nowy Projekt Integracyjny")))
-                .andReturn();
+                .andExpect(jsonPath("$.title", is("Nowa Książka Integracyjna")))
+                .andExpect(jsonPath("$.author", is("Autor Testowy")));
+    }
 
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        Book createdProject = objectMapper.readValue(responseBody, Book.class);
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"}) // Symulujemy zwykłego użytkownika
+    void shouldFailToCreateNewBook_whenUser() throws Exception {
+        Book newBook = new Book();
+        newBook.setTitle("Książka Użytkownika");
+        newBook.setAuthor("Autor Użytkownik");
+        newBook.setIsbn("888-1234567890");
 
-        mockMvc.perform(get("/api/projects/" + createdProject.getId())
+        // Endpoint POST /api/books jest zabezpieczony dla ADMINA
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newBook)))
+                .andExpect(status().isForbidden()); // Oczekujemy błędu 403 Forbidden
+    }
+
+
+    @Test
+    @WithMockUser(username = "user", roles = {"USER"}) // Dostęp dla USER i ADMIN
+    void shouldGetBookById() throws Exception {
+        Book bookToCreate = new Book();
+        bookToCreate.setTitle("Książka Do Odczytu");
+        bookToCreate.setAuthor("Autor Do Odczytu");
+        bookToCreate.setIsbn("777-1234567890");
+        Book savedBook = bookRepository.save(bookToCreate); // Zapisujemy bezpośrednio przez repo
+
+        mockMvc.perform(get("/api/books/" + savedBook.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is("Nowy Projekt Integracyjny")));
+                .andExpect(jsonPath("$.id", is(savedBook.getId().intValue())))
+                .andExpect(jsonPath("$.title", is("Książka Do Odczytu")));
     }
 
     @Test
-    void shouldGetProjectById() throws Exception {
-        Book projectToCreate = new Book();
-        projectToCreate.setName("Projekt Do Odczytu");
+    @WithMockUser(username = "user", roles = {"USER"})
+    void shouldGetAllBooks() throws Exception {
+        Book book1 = new Book();
+        book1.setTitle("Książka Alpha");
+        book1.setAuthor("Autor Alpha");
+        book1.setIsbn("111-123");
+        bookRepository.save(book1);
 
-        MvcResult createResult = mockMvc.perform(post("/api/projects/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(projectToCreate)))
-                .andExpect(status().isCreated())
-                .andReturn();
+        Book book2 = new Book();
+        book2.setTitle("Książka Beta");
+        book2.setAuthor("Autor Beta");
+        book2.setIsbn("222-123");
+        bookRepository.save(book2);
 
-        Book createdProject = objectMapper.readValue(createResult.getResponse().getContentAsString(), Book.class);
-        Long projectId = createdProject.getId();
-
-        mockMvc.perform(get("/api/projects/" + projectId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(projectId.intValue())))
-                .andExpect(jsonPath("$.name", is("Projekt Do Odczytu")));
-    }
-
-    @Test
-    void shouldReturnNotFoundForNonExistentProjectId() throws Exception {
-        Long nonExistentProjectId = 9999L;
-        mockMvc.perform(get("/api/projects/" + nonExistentProjectId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void shouldGetAllProjects() throws Exception {
-        Book project1 = new Book();
-        project1.setName("Projekt Alpha");
-        mockMvc.perform(post("/api/projects/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(project1)))
-                .andExpect(status().isCreated());
-
-        Book project2 = new Book();
-        project2.setName("Projekt Beta");
-        mockMvc.perform(post("/api/projects/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(project2)))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(get("/api/projects/all")
+        mockMvc.perform(get("/api/books")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].name", containsInAnyOrder("Projekt Alpha", "Projekt Beta")));
+                .andExpect(jsonPath("$[*].title", containsInAnyOrder("Książka Alpha", "Książka Beta")));
     }
 
     @Test
-    void shouldUpdateExistingProject() throws Exception {
-        Book projectToCreate = new Book();
-        projectToCreate.setName("Projekt Do Aktualizacji");
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void shouldUpdateExistingBook_whenAdmin() throws Exception {
+        Book bookToCreate = new Book();
+        bookToCreate.setTitle("Książka Do Aktualizacji");
+        bookToCreate.setAuthor("Autor Do Aktualizacji");
+        bookToCreate.setIsbn("333-123");
+        Book savedBook = bookRepository.save(bookToCreate);
 
-        MvcResult createResult = mockMvc.perform(post("/api/projects/create")
+        Book updatedBookDetails = new Book();
+        updatedBookDetails.setTitle("Zaktualizowana Nazwa Książki");
+        updatedBookDetails.setAuthor(savedBook.getAuthor()); // Możemy zaktualizować tylko niektóre pola
+        updatedBookDetails.setIsbn(savedBook.getIsbn());
+
+        mockMvc.perform(put("/api/books/" + savedBook.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(projectToCreate)))
-                .andExpect(status().isCreated())
-                .andReturn();
-
-        Book createdProject = objectMapper.readValue(createResult.getResponse().getContentAsString(), Book.class);
-        Long projectId = createdProject.getId();
-
-        Book updatedProjectDetails = new Book();
-        updatedProjectDetails.setName("Zaktualizowana Nazwa Projektu");
-
-        mockMvc.perform(put("/api/projects/update/" + projectId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedProjectDetails)))
+                        .content(objectMapper.writeValueAsString(updatedBookDetails)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(projectId.intValue())))
-                .andExpect(jsonPath("$.name", is("Zaktualizowana Nazwa Projektu")));
-
-        mockMvc.perform(get("/api/projects/" + projectId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is("Zaktualizowana Nazwa Projektu")));
+                .andExpect(jsonPath("$.id", is(savedBook.getId().intValue())))
+                .andExpect(jsonPath("$.title", is("Zaktualizowana Nazwa Książki")));
     }
 
     @Test
-    void shouldReturnNotFoundWhenUpdatingNonExistentProject() throws Exception {
-        Long nonExistentProjectId = 9999L;
-        Book updatedProjectDetails = new Book();
-        updatedProjectDetails.setName("Próba Aktualizacji Nieistniejącego");
+    @WithMockUser(username = "user", roles = {"USER"})
+    void shouldFailToUpdateBook_whenUser() throws Exception {
+        Book bookToCreate = new Book();
+        bookToCreate.setTitle("Książka Do Aktualizacji przez Usera");
+        bookToCreate.setAuthor("Autor");
+        bookToCreate.setIsbn("333-456");
+        Book savedBook = bookRepository.save(bookToCreate);
 
-        mockMvc.perform(put("/api/projects/update/" + nonExistentProjectId)
+        Book updatedBookDetails = new Book();
+        updatedBookDetails.setTitle("Nieudana Aktualizacja");
+
+        mockMvc.perform(put("/api/books/" + savedBook.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedProjectDetails)))
-                .andExpect(status().isNotFound());
+                        .content(objectMapper.writeValueAsString(updatedBookDetails)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void shouldDeleteExistingProject() throws Exception {
-        Book projectToCreate = new Book();
-        projectToCreate.setName("Projekt Do Usunięcia");
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void shouldDeleteExistingBook_whenAdmin() throws Exception {
+        Book bookToCreate = new Book();
+        bookToCreate.setTitle("Książka Do Usunięcia");
+        bookToCreate.setAuthor("Autor Do Usunięcia");
+        bookToCreate.setIsbn("444-123");
+        Book savedBook = bookRepository.save(bookToCreate);
 
-        MvcResult createResult = mockMvc.perform(post("/api/projects/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(projectToCreate)))
-                .andExpect(status().isCreated())
-                .andReturn();
-
-        Book createdProject = objectMapper.readValue(createResult.getResponse().getContentAsString(), Book.class);
-        Long projectId = createdProject.getId();
-
-        mockMvc.perform(delete("/api/projects/delete/" + projectId))
+        mockMvc.perform(delete("/api/books/" + savedBook.getId()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/projects/" + projectId)
+        mockMvc.perform(get("/api/books/" + savedBook.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound()); // Zakładając, że GET na usunięty zasób zwraca 404
     }
 
     @Test
-    void shouldReturnNotFoundWhenDeletingNonExistentProject() throws Exception {
-        Long nonExistentProjectId = 9999L;
-        mockMvc.perform(delete("/api/projects/delete/" + nonExistentProjectId))
-                .andExpect(status().isNotFound());
+    void shouldFailToDeleteBook_whenUser() throws Exception {
+        Book bookToCreate = new Book();
+        bookToCreate.setTitle("Książka Do Usunięcia przez Usera");
+        bookToCreate.setAuthor("Autor");
+        bookToCreate.setIsbn("444-456");
+        Book savedBook = bookRepository.save(bookToCreate);
+
+        mockMvc.perform(delete("/api/books/" + savedBook.getId()))
+                .andExpect(status().isForbidden());
+    }
+
+    // Testy na dostęp anonimowy (niezalogowany)
+    @Test
+    void shouldFailToCreateBook_whenAnonymous() throws Exception {
+        Book newBook = new Book();
+        newBook.setTitle("Anonimowa Książka");
+        newBook.setAuthor("Anonimowy Autor");
+        newBook.setIsbn("000-000");
+
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newBook)))
+                .andExpect(status().isUnauthorized()); // Lub 302 Found (przekierowanie do logowania), jeśli formLogin jest głównym mechanizmem
+        // Jeśli używasz .httpBasic() lub .oauth2ResourceServer(), 401 jest bardziej prawdopodobne dla API
     }
 
     @Test
-    void shouldAssignUserToProject() throws Exception {
-        User userToAssign = new User();
-        userToAssign.setUsername("userDoPrzypisania");
-        MvcResult userCreateResult = mockMvc.perform(post("/api/users/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userToAssign)))
-                .andExpect(status().isOk())
-                .andReturn();
-        User createdUser = objectMapper.readValue(userCreateResult.getResponse().getContentAsString(), User.class);
-        Long userId = createdUser.getId();
-        assertNotNull(userId, "User ID should not be null after creation");
-
-        Book projectForAssignment = new Book();
-        projectForAssignment.setName("Projekt Do Przypisania Użytkownika");
-        MvcResult projectCreateResult = mockMvc.perform(post("/api/projects/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(projectForAssignment)))
-                .andExpect(status().isCreated())
-                .andReturn();
-        Book createdProject = objectMapper.readValue(projectCreateResult.getResponse().getContentAsString(), Book.class);
-        Long projectId = createdProject.getId();
-        assertNotNull(projectId, "Project ID should not be null after creation");
-
-        mockMvc.perform(post("/api/projects/" + projectId + "/users/" + userId)
+    void shouldGetBooks_whenAnonymous_ifEndpointIsPublic() throws Exception {
+        // W naszej konfiguracji SecurityConfig, GET /api/books jest dla USER lub ADMIN
+        // więc anonimowy dostęp powinien być zabroniony (401 lub przekierowanie)
+        mockMvc.perform(get("/api/books")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()) // Sprawdzamy status
-                .andDo(print()); // Drukujemy odpowiedź, żeby zobaczyć co jest nie tak z ciałem odpowiedzi na POST
-
-        // Weryfikacja przez ponowne pobranie projektu (bardziej niezawodna niż analiza ciała odpowiedzi z POST,
-        // zwłaszcza jeśli są problemy z serializacją JSON w tej odpowiedzi)
-        mockMvc.perform(get("/api/projects/" + projectId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(projectId.intValue())))
-                .andExpect(jsonPath("$.name", is("Projekt Do Przypisania Użytkownika")))
-                .andExpect(jsonPath("$.users", hasSize(1)))
-                .andExpect(jsonPath("$.users[0].id", is(userId.intValue())))
-                .andExpect(jsonPath("$.users[0].username", is("userDoPrzypisania")));
+                .andExpect(status().isUnauthorized()); // Lub 302 Found
     }
+
 }
