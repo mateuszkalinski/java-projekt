@@ -2,42 +2,54 @@ package com.example.librarysystem.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // <--- NOWY IMPORT
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher; // <--- NOWY IMPORT
+import static org.springframework.security.config.Customizer.withDefaults; // Dla httpBasic lub formLogin z domyślnymi
 
 @Configuration
-@EnableWebSecurity // Włącza obsługę Spring Security
+@EnableWebSecurity
 public class SecurityConfig {
 
-    // Bean do hashowania haseł
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // Bean konfigurujący łańcuch filtrów bezpieczeństwa
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Na razie wyłączymy CSRF, co jest częste dla REST API,
-                // ale w aplikacji webowej z formularzami warto to przemyśleć.
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                                // Na tym etapie możemy zezwolić na dostęp do wszystkich endpointów
-                                // lub zdefiniować bardzo proste reguły.
-                                // Zezwólmy na razie na wszystko, aby móc testować bez logowania.
-                                // Później będziemy to zawężać.
-                                .requestMatchers("/**").permitAll() // UWAGA: To jest tylko na czas developmentu!
-                        // Przykładowe reguły, które dodamy później:
-                        // .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Publiczne endpointy
-                        // .requestMatchers("/api/admin/**").hasRole("ADMIN") // Endpointy dla admina
-                        // .anyRequest().authenticated() // Wszystkie inne żądania wymagają uwierzytelnienia
+                        .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/borrowings/borrow", "/api/borrowings/**/return").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/borrowings/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/books").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN") // Pamiętaj, że GET /api/users/{id} może być dla usera samego siebie
+                        .requestMatchers("/api/borrowings").hasRole("ADMIN")
+                        .anyRequest().authenticated()
                 )
-                // Możemy dodać konfigurację formularza logowania lub HTTP Basic
-                .httpBasic(org.springframework.security.config.Customizer.withDefaults()); // Proste logowanie HTTP Basic na start
+                .formLogin(formLogin -> formLogin // Używamy domyślnego formularza logowania Springa
+                        // .loginPage("/my-custom-login") // Usunięte lub zakomentowane, jeśli nie masz własnej strony
+                        .defaultSuccessUrl("/", true) // Przekieruj na główną ścieżkę po sukcesie
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/?logout=true") // Przekieruj na główną ścieżkę z info o wylogowaniu
+                        .permitAll()
+                );
+        // Jeśli chcesz umożliwić testowanie API np. przez Postmana bez formularza logowania,
+        // a jedynie przez podstawowe uwierzytelnianie HTTP, możesz zostawić lub dodać:
+        // .httpBasic(withDefaults());
+        // Jednak formLogin jest bardziej typowe dla interakcji przez przeglądarkę.
 
         return http.build();
     }
