@@ -3,7 +3,7 @@ version: '3.8'
 services:
   app:
     build: . # Buduje obraz z Dockerfile w bieżącym katalogu
-    container_name: project-manager-app
+    container_name: library-system-app
     ports:
       - "8080:8080" # Mapuje port 8080 hosta na port 8080 kontenera
     depends_on:
@@ -18,7 +18,7 @@ services:
 
   db:
     image: postgres:15-alpine # Używa oficjalnego obrazu PostgreSQL
-    container_name: project-manager-db
+    container_name: library-system-db
     ports:
       - "5432:5432" # Opcjonalnie: mapuje port bazy danych na hosta, jeśli chcesz mieć do niej dostęp z zewnątrz
     environment:

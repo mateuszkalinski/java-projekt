@@ -8,10 +8,10 @@
         <version>3.4.3</version>
         <relativePath/> </parent>
     <groupId>com.example</groupId>
-    <artifactId>ProjectManagerApp</artifactId>
+    <artifactId>ProjectLibrarySystem</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ProjectManagerApp</name>
-    <description>ProjectManagerApp</description>
+    <name>ProjectLibrarySystem</name>
+    <description>Aplikacja do zarządzania biblioteką</description>
     <url/>
     <licenses>
         <license/>
