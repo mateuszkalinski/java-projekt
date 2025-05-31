@@ -52,7 +52,7 @@ public class SecurityConfig {
                 )
                 .formLogin(formLogin -> formLogin
                         // Domyślny formularz
-                        .defaultSuccessUrl("/", true)
+                        .defaultSuccessUrl("/swagger-ui.html", true)
                         .permitAll()
                 )
                 .logout(logout -> logout

@@ -15,7 +15,7 @@ services:
       # 'db' to nazwa serwisu bazy danych zdefiniowana poniżej
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=admin # Przykładowe hasło, możesz zmienić
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update # Hibernate spróbuje zaktualizować schemat
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
 
   db:
     image: postgres:15-alpine # Używa oficjalnego obrazu PostgreSQL
