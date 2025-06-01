@@ -321,20 +321,17 @@ Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie apli
     *(Tutaj umieść zrzut ekranu głównego widoku Swagger UI, pokazujący listę dostępnych kontrolerów/endpointów)*
     `![Swagger UI - Strona główna](docs/images/swagger_ui_main.png "Strona główna Swagger UI")`
 
-* **Przykładowy endpoint w Swagger UI (np. lista książek):**
-    *(Tutaj umieść zrzut ekranu rozwiniętego endpointu w Swagger UI, np. GET /api/books, z widocznymi parametrami i przykładową odpowiedzią)*
-    `![Swagger UI - Lista książek](docs/images/swagger_ui_books_list.png "Przykład endpointu /api/books w Swagger UI")`
+* **Przykładowy endpoint w Swagger UI:** <br>
+  ![Przykładowy endpoint](images/photo6.png "Przykładowy endpoint")
 
-* **Formularz logowania Spring Security:**
-    *(Tutaj umieść zrzut ekranu strony logowania, która pojawia się przy próbie dostępu do zabezpieczonego zasobu)*
-    `![Formularz logowania](docs/images/login_form.png "Formularz logowania Spring Security")`
+* **Formularz logowania Spring Security:** <br>
+  ![Formularz logowania](images/photo5.png "Formularz logowania")
 
-* **Przykładowa odpowiedź API (np. z Postmana lub Swaggera):**
-    *(Tutaj umieść zrzut ekranu pokazujący przykładową odpowiedź JSON z jednego z Twoich endpointów, np. szczegóły książki lub dane użytkownika)*
-    `![Przykładowa odpowiedź API](docs/images/api_response_example.png "Przykładowa odpowiedź JSON z API")`
+* **Przykładowa odpowiedź API:** <br>
+  ![Przykładowa odpowiedź API](images/photo3.png "Przykładowa odpowiedź API")
 
 * **Widok bazy danych:** <br>
-    ![Widok bazy danych](images/photo7.png "Widok bazy danych")
+  ![Widok bazy danych](images/photo7.png "Widok bazy danych")
 
 ---
 
