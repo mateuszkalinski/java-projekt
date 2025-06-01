@@ -254,9 +254,9 @@ Interaktywna dokumentacja API jest dostępna pod adresem `http://localhost:8080/
 
 ## 🗄️ Model bazy danych (ERD)
 
-Schemat bazy danych jest zarządzany przez Flyway. Pierwsza migracja (`V1__Create_base_tables.sql`) tworzy następujące tabele: `library_users`, `book`, `borrowings` wraz z ich relacjami.
-
-*(Tutaj wstaw swój wygenerowany diagram ERD jako obrazek. Możesz go umieścić w repozytorium np. w folderze `docs/images/` i podlinkować. Upewnij się, że ścieżka jest poprawna, np.:)*
+Schemat bazy danych jest zarządzany przez Flyway. Pierwsza migracja (`V1__Create_base_tables.sql`) tworzy następujące tabele: `library_users`, `book`, `borrowings` wraz z ich relacjami. <br>
+![Schemat bazy diagramio](images/photo1.png "Schemat bazy diagramio")
+![Schemat bazy intellij](images/photo2.png "Schemat bazy intellij")
 
 ---
 
@@ -317,9 +317,8 @@ Projekt wykorzystuje JUnit 5, Mockito oraz Testcontainers do zapewnienia jakośc
 
 Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie aplikacji.
 
-* **Strona główna Swagger UI:**
-    *(Tutaj umieść zrzut ekranu głównego widoku Swagger UI, pokazujący listę dostępnych kontrolerów/endpointów)*
-    `![Swagger UI - Strona główna](docs/images/swagger_ui_main.png "Strona główna Swagger UI")`
+* **Strona główna Swagger UI:** <br>
+  ![Przykładowy endpoint](images/photo3.png "Przykładowy endpoint")
 
 * **Przykładowy endpoint w Swagger UI:** <br>
   ![Przykładowy endpoint](images/photo6.png "Przykładowy endpoint")
@@ -328,7 +327,7 @@ Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie apli
   ![Formularz logowania](images/photo5.png "Formularz logowania")
 
 * **Przykładowa odpowiedź API:** <br>
-  ![Przykładowa odpowiedź API](images/photo3.png "Przykładowa odpowiedź API")
+  ![Przykładowa odpowiedź API](images/photo4.png "Przykładowa odpowiedź API")
 
 * **Widok bazy danych:** <br>
   ![Widok bazy danych](images/photo7.png "Widok bazy danych")
