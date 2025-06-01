@@ -106,6 +106,7 @@ System implementuje **Role-Based Access Control** z dwoma głównymi rolami uży
 ### Implementacja bezpieczeństwa
 
 Bezpieczeństwo aplikacji oparte jest na Spring Security. Konfiguracja znajduje się w klasie `com.example.librarysystem.config.SecurityConfig`.
+Logowanie odbywa się poprzez standardowy formularz Spring Security.
 
 ```java
 // Fragment SecurityConfig.java
@@ -147,7 +148,6 @@ public class SecurityConfig {
     }
 }
 ```
-Logowanie odbywa się poprzez standardowy formularz Spring Security.
 ---
 
 ## 🚀 Technologie
