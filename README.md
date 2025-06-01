@@ -54,7 +54,7 @@ Projekt został zbudowany zgodnie z **filarami obiektowości** i **zasadami SOLI
 
 1.  **Wzorzec Strategia (Strategy Pattern)** 🎯
     * **Lokalizacja:** `com.example.librarysystem.service.policy.LoanPolicy` (interfejs) oraz jego implementacje `StandardLoanPolicy` i `AcademicLoanPolicy`.
-    * **Opis:** Wzorzec Strategia został użyty do zdefiniowania różnych polityk obliczania terminu zwrotu książki. `BorrowingService` korzysta z wstrzykniętej implementacji `LoanPolicy` do elastycznego określania daty zwrotu, co pozwala na łatwe dodawanie nowych polityk wypożyczeń bez modyfikacji samego serwisu. Wymóg użycia wzorca projektowego jest spełniony[cite: 1].
+    * **Opis:** Wzorzec Strategia został użyty do zdefiniowania różnych polityk obliczania terminu zwrotu książki. `BorrowingService` korzysta z wstrzykniętej implementacji `LoanPolicy` do elastycznego określania daty zwrotu, co pozwala na łatwe dodawanie nowych polityk wypożyczeń bez modyfikacji samego serwisu. Wymóg użycia wzorca projektowego jest spełniony.
 
     ```java
     // Interfejs LoanPolicy
@@ -75,7 +75,7 @@ Projekt został zbudowany zgodnie z **filarami obiektowości** i **zasadami SOLI
 
 ### Polimorfizm
 
-System wykorzystuje **polimorfizm** poprzez interfejs `LoanPolicy`[cite: 1]. Serwis `BorrowingService` operuje na abstrakcji `LoanPolicy`, a konkretne zachowanie (sposób obliczania daty zwrotu) jest determinowane przez rzeczywisty typ obiektu (np. `StandardLoanPolicy`, `AcademicLoanPolicy`) wstrzyknięty w czasie działania aplikacji. To również spełnia wymóg implementacji polimorfizmu w projekcie[cite: 1].
+System wykorzystuje **polimorfizm** poprzez interfejs `LoanPolicy`. Serwis `BorrowingService` operuje na abstrakcji `LoanPolicy`, a konkretne zachowanie (sposób obliczania daty zwrotu) jest determinowane przez rzeczywisty typ obiektu (np. `StandardLoanPolicy`, `AcademicLoanPolicy`) wstrzyknięty w czasie działania aplikacji. To również spełnia wymóg implementacji polimorfizmu w projekcie.
 
 ```java
 // W BorrowingService
@@ -94,18 +94,18 @@ public Borrowing borrowBook(Long userId, Long bookId) {
 
 ## 🔐 System autoryzacji (RBAC)
 
-System implementuje **Role-Based Access Control** z dwoma głównymi rolami użytkowników[cite: 6].
+System implementuje **Role-Based Access Control** z dwoma głównymi rolami użytkowników.
 
 ### Role użytkowników
 
 | Rola         | Opis                | Główne Uprawnienia                                                                                                                                  |
 | :----------- | :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ROLE_USER`  | Zwykły użytkownik   | • Przeglądanie książek [cite: 10]<br>• Wypożyczanie i zwracanie książek [cite: 10]<br>• Przeglądanie własnej historii wypożyczeń [cite: 10]                                               |
-| `ROLE_ADMIN` | Administrator systemu | • Wszystkie uprawnienia `ROLE_USER` [cite: 10]<br>• Zarządzanie katalogiem książek (dodawanie, edycja, usuwanie) [cite: 10]<br>• Zarządzanie użytkownikami [cite: 10]<br>• Przeglądanie wszystkich wypożyczeń [cite: 10] |
+| `ROLE_USER`  | Zwykły użytkownik   | • Przeglądanie książek <br>• Wypożyczanie i zwracanie książek <br>• Przeglądanie własnej historii wypożyczeń                                              |
+| `ROLE_ADMIN` | Administrator systemu | • Wszystkie uprawnienia `ROLE_USER` <br>• Zarządzanie katalogiem książek (dodawanie, edycja, usuwanie) <br>• Zarządzanie użytkownikami <br>• Przeglądanie wszystkich wypożyczeń  |
 
 ### Implementacja bezpieczeństwa
 
-Bezpieczeństwo aplikacji oparte jest na Spring Security[cite: 10]. Konfiguracja znajduje się w klasie `com.example.librarysystem.config.SecurityConfig`[cite: 10].
+Bezpieczeństwo aplikacji oparte jest na Spring Security. Konfiguracja znajduje się w klasie `com.example.librarysystem.config.SecurityConfig`.
 
 ```java
 // Fragment SecurityConfig.java
@@ -149,18 +149,18 @@ public class SecurityConfig {
 ```
 ## 🔐 System autoryzacji (RBAC)
 
-System implementuje **Role-Based Access Control** z dwoma głównymi rolami użytkowników[cite: 6].
+System implementuje **Role-Based Access Control** z dwoma głównymi rolami użytkowników.
 
 ### Role użytkowników
 
 | Rola         | Opis                | Główne Uprawnienia                                                                                                                                  |
 | :----------- | :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ROLE_USER`  | Zwykły użytkownik   | • Przeglądanie książek [cite: 10]<br>• Wypożyczanie i zwracanie książek [cite: 10]<br>• Przeglądanie własnej historii wypożyczeń [cite: 10]                                               |
-| `ROLE_ADMIN` | Administrator systemu | • Wszystkie uprawnienia `ROLE_USER` [cite: 10]<br>• Zarządzanie katalogiem książek (dodawanie, edycja, usuwanie) [cite: 10]<br>• Zarządzanie użytkownikami [cite: 10]<br>• Przeglądanie wszystkich wypożyczeń [cite: 10] |
+| `ROLE_USER`  | Zwykły użytkownik   | • Przeglądanie książek ]<br>• Wypożyczanie i zwracanie książek <br>• Przeglądanie własnej historii wypożyczeń                                                |
+| `ROLE_ADMIN` | Administrator systemu | • Wszystkie uprawnienia `ROLE_USER` <br>• Zarządzanie katalogiem książek (dodawanie, edycja, usuwanie) <br>• Zarządzanie użytkownikami ]<br>• Przeglądanie wszystkich wypożyczeń |
 
 ### Implementacja bezpieczeństwa
 
-Bezpieczeństwo aplikacji oparte jest na Spring Security[cite: 10]. Konfiguracja znajduje się w klasie `com.example.librarysystem.config.SecurityConfig`[cite: 10].
+Bezpieczeństwo aplikacji oparte jest na Spring Security. Konfiguracja znajduje się w klasie `com.example.librarysystem.config.SecurityConfig`.
 
 ```java
 // Fragment SecurityConfig.java
