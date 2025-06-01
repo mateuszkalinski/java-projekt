@@ -334,7 +334,7 @@ Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie apli
     `![Przykładowa odpowiedź API](docs/images/api_response_example.png "Przykładowa odpowiedź JSON z API")`
 
 * **Widok bazy danych:** <br>
-    !(images/photo7.png "Widok bazy danych")
+    ![Widok bazy danych](images/photo7.png "Widok bazy danych")
 
 ---
 
