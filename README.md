@@ -333,9 +333,8 @@ Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie apli
     *(Tutaj umieść zrzut ekranu pokazujący przykładową odpowiedź JSON z jednego z Twoich endpointów, np. szczegóły książki lub dane użytkownika)*
     `![Przykładowa odpowiedź API](docs/images/api_response_example.png "Przykładowa odpowiedź JSON z API")`
 
-* ** Widok bazy danych (np. z DBeaver/IntelliJ):**
-    *(Tutaj umieść zrzut ekranu pokazujący strukturę tabel w bazie danych lub przykładowe dane)*
-    `![Struktura bazy danych](docs/images/db_structure.png "Widok tabel w bazie danych")`
+* ** Widok bazy danych:**
+    `/images/photo7.png "Widok tabel w bazie danych")`
 
 ---
 
