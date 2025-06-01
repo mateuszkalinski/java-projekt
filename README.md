@@ -73,6 +73,38 @@ Projekt został zbudowany zgodnie z **filarami obiektowości** i **zasadami SOLI
     }
     ```
 
+2.  **Wzorzec Budowniczy (Builder Pattern) w Spring Security** 🛠️
+    * **Opis:** Konfiguracja obiektu `HttpSecurity` w klasie `SecurityConfig` odbywa się poprzez łańcuch wywołań metod (tzw. fluent API), co jest charakterystyczne dla wzorca Budowniczego. Jest to mechanizm dostarczany przez sam framework Spring Security, umożliwiający czytelne i krokowe definiowanie reguł bezpieczeństwa.
+        ```java
+        // Fragment SecurityConfig.java demonstrujący wzorzec Budowniczy
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/api/users/register").permitAll()
+                // ... dalsze konfiguracje ...
+            )
+            .formLogin(formLogin -> formLogin /* ... */);
+        ```
+    * Dodatkowo, sam framework Spring Security wewnętrznie wykorzystuje inne wzorce, takie jak Łańcuch Odpowiedzialności (dla filtrów) czy Strategia (dla mechanizmów uwierzytelniania), co przyczynia się do jego elastyczności.
+
+### Polimorfizm
+
+System wykorzystuje **polimorfizm** poprzez interfejs `LoanPolicy`. Serwis `BorrowingService` operuje na abstrakcji `LoanPolicy`, a konkretne zachowanie (sposób obliczania daty zwrotu) jest determinowane przez rzeczywisty typ obiektu (np. `StandardLoanPolicy`, `AcademicLoanPolicy`) wstrzyknięty w czasie działania aplikacji. To również spełnia wymóg implementacji polimorfizmu w projekcie.
+
+```java
+// W BorrowingService
+private final LoanPolicy loanPolicy;
+
+public BorrowingService(/*...*/, @Qualifier("standardLoanPolicy") LoanPolicy loanPolicy) {
+    this.loanPolicy = loanPolicy;
+}
+
+public Borrowing borrowBook(Long userId, Long bookId) {
+    // ...
+    LocalDate dueDate = this.loanPolicy.calculateDueDate(borrowDate, book, user); // Wykorzystanie polimorfizmu
+    // ...
+}
+
 ### Polimorfizm
 
 System wykorzystuje **polimorfizm** poprzez interfejs `LoanPolicy`. Serwis `BorrowingService` operuje na abstrakcji `LoanPolicy`, a konkretne zachowanie (sposób obliczania daty zwrotu) jest determinowane przez rzeczywisty typ obiektu (np. `StandardLoanPolicy`, `AcademicLoanPolicy`) wstrzyknięty w czasie działania aplikacji. To również spełnia wymóg implementacji polimorfizmu w projekcie.
@@ -287,11 +319,6 @@ Projekt wykorzystuje JUnit 5, Mockito oraz Testcontainers do zapewnienia jakośc
 * Aby zbudować projekt, uruchomić wszystkie testy (jednostkowe i integracyjne) oraz wygenerować raporty pokrycia kodu:
     ```bash
     mvn clean verify
-    ```
-* Alternatywnie, aby tylko uruchomić testy bez instalowania artefaktu:
-    ```bash
-    mvn clean test # Uruchamia testy jednostkowe (Surefire)
-    mvn clean integration-test # Uruchamia testy integracyjne (Failsafe), wymaga wcześniejszej fazy 'package'
     ```
 
 **Pokrycie kodu (JaCoCo):**
