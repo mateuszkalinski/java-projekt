@@ -333,7 +333,7 @@ Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie apli
     *(Tutaj umieść zrzut ekranu pokazujący przykładową odpowiedź JSON z jednego z Twoich endpointów, np. szczegóły książki lub dane użytkownika)*
     `![Przykładowa odpowiedź API](docs/images/api_response_example.png "Przykładowa odpowiedź JSON z API")`
 
-* ** Widok bazy danych:**
+* ** Widok bazy danych:** <br>
     ![Widok bazy danych](images/photo7.png "Widok bazy danych")
 
 ---
