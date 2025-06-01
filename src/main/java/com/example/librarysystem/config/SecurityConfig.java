@@ -46,7 +46,8 @@ public class SecurityConfig {
 
                         // Dla ADMINa lista wszystkich wypożyczeń "/api/borrowings"
                         .requestMatchers("/api/borrowings").hasRole("ADMIN")
-
+                        
+                        // test
                         // pozostałe żądania – uwierzytelnienie
                         .anyRequest().authenticated()
                 )
