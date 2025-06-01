@@ -188,16 +188,11 @@ public class SecurityConfig {
 
 **Uruchomienie:**
 
-1.  Sklonuj repozytorium (jeśli dotyczy):
-    ```bash
-    git clone <URL_TWOJEGO_REPOZYTORIUM>
-    cd <NAZWA_KATALOGU_PROJEKTU>
-    ```
-2.  Zbuduj projekt za pomocą Mavena (tworzy plik JAR):
+1.  Zbuduj projekt za pomocą Mavena (tworzy plik JAR):
     ```bash
     mvn clean install
     ```
-3.  Uruchom cały stos aplikacji (aplikacja + baza danych) za pomocą Docker Compose:
+2.  Uruchom cały stos aplikacji (aplikacja + baza danych) za pomocą Docker Compose:
     ```bash
     docker-compose up --build
     ```
@@ -214,16 +209,16 @@ public class SecurityConfig {
     Przykładowe ciało żądania:
     ```json
     {
-      "username": "user1",
-      "password": "password123",
+      "username": "user",
+      "password": "user",
       "role": "ROLE_USER"
     }
     ```
     Lub dla admina:
     ```json
     {
-      "username": "admin1",
-      "password": "password123",
+      "username": "admin",
+      "password": "admin",
       "role": "ROLE_ADMIN"
     }
     ```
