@@ -307,9 +307,8 @@ Projekt wykorzystuje JUnit 5, Mockito oraz Testcontainers do zapewnienia jakośc
 * Raporty pokrycia kodu generowane przez JaCoCo są dostępne po wykonaniu `mvn clean verify` (lub `mvn clean install`) w katalogu:
     * `target/site/jacoco-ut/index.html` (dla testów jednostkowych)
     * `target/site/jacoco-it/index.html` (dla testów integracyjnych)
-    * *(Możesz też skonfigurować zagregowany raport w `target/site/jacoco/index.html`)*
-* **Cel projektu:** Osiągnięcie co najmniej 80% pokrycia kodu testami.
-* **Aktualne pokrycie kodu testami:** *(Wstaw tutaj swoje aktualne pokrycie, np. "Całkowite pokrycie instrukcji: XX%, pokrycie gałęzi: YY% (na podstawie raportów JaCoCo-UT i JaCoCo-IT)")*
+* **Aktualne pokrycie kodu testami:** <br>
+![Pokrycie kodu testami](images/photo8.png "Pokrycie kodu testami")
 
 ---
 
