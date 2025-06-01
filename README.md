@@ -6,7 +6,7 @@ Nowoczesny system do zarządzania zasobami bibliotecznymi i wypożyczeniami, zbu
 
 ## 📋 Spis treści
 
-1.  [🎯 Opis projektu](#opis-projektu)
+1.  [🎯 Opis projektu](🎯-opis-projektu)
 2.  [✨ Kluczowe funkcjonalności](#kluczowe-funkcjonalnosci)
 3.  [🏗️ Architektura i wzorce projektowe](#architektura-i-wzorce-projektowe)
     * [Wzorce projektowe](#wzorce-projektowe)
