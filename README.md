@@ -48,7 +48,7 @@ Nowoczesny system do zarządzania zasobami bibliotecznymi i wypożyczeniami, zbu
 
 ## 🏗️ Architektura i wzorce projektowe
 
-Projekt został zbudowany zgodnie z **filarami obiektowości** i **zasadami SOLID**[cite: 1]. Zastosowano standardową architekturę warstwową typową dla aplikacji Spring Boot (Kontrolery, Serwisy, Repozytoria).
+Projekt został zbudowany zgodnie z **filarami obiektowości** i **zasadami SOLID**. Zastosowano standardową architekturę warstwową typową dla aplikacji Spring Boot (Kontrolery, Serwisy, Repozytoria).
 
 ### Wzorce projektowe
 
