@@ -6,21 +6,21 @@ Nowoczesny system do zarządzania zasobami bibliotecznymi i wypożyczeniami, zbu
 
 ## 📋 Spis treści
 
-1.  [🎯 Opis projektu](🎯-opis-projektu)
-2.  [✨ Kluczowe funkcjonalności](#kluczowe-funkcjonalnosci)
-3.  [🏗️ Architektura i wzorce projektowe](#architektura-i-wzorce-projektowe)
-    * [Wzorce projektowe](#wzorce-projektowe)
-    * [Polimorfizm](#polimorfizm)
-4.  [🔐 System autoryzacji (RBAC)](#system-autoryzacji-rbac)
-    * [Role użytkowników](#role-uzytkownikow)
-    * [Implementacja bezpieczeństwa](#implementacja-bezpieczenstwa)
-5.  [🚀 Technologie](#technologie)
-6.  [🐳 Szybki start z Docker](#szybki-start-z-docker)
-7.  [📚 Dokumentacja API (Swagger)](#dokumentacja-api-swagger)
-8.  [🗄️ Model bazy danych (ERD)](#model-bazy-danych-erd)
-9.  [🔧 Konfiguracja](#konfiguracja)
-10. [🧪 Testowanie](#testowanie)
-11. [📸 Zrzuty ekranu](#zrzuty-ekranu) 
+1.  🎯 Opis projektu
+2.  ✨ Kluczowe funkcjonalności
+3.  🏗️ Architektura i wzorce projektowe
+    * Wzorce projektowe
+    * Polimorfizm
+4.  🔐 System autoryzacji (RBAC)
+    * Role użytkowników
+    * Implementacja bezpieczeństwa
+5.  🚀 Technologie
+6.  🐳 Szybki start z Docker
+7.  📚 Dokumentacja API (Swagger)
+8.  🗄️ Model bazy danych (ERD)
+9.  🔧 Konfiguracja
+10. 🧪 Testowanie
+11. 📸 Zrzuty ekranu
 
 ---
 
