@@ -320,9 +320,6 @@ Poniżej znajdują się przykładowe zrzuty ekranu prezentujące działanie apli
 * **Strona główna Swagger UI:** <br>
   ![Przykładowy endpoint](images/photo3.png "Przykładowy endpoint")
 
-* **Przykładowy endpoint w Swagger UI:** <br>
-  ![Przykładowy endpoint](images/photo6.png "Przykładowy endpoint")
-
 * **Formularz logowania Spring Security:** <br>
   ![Formularz logowania](images/photo5.png "Formularz logowania")
 
