@@ -17,13 +17,13 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false) // Tytuł nie powinien być pusty
+    @Column(nullable = false) // Tytuł, wymagany
     private String title;
 
-    @Column(nullable = false) // Autor też raczej wymagany
+    @Column(nullable = false) // Autor, wymagany
     private String author;
 
-    @Column(unique = true) // ISBN powinien być unikalny
+    @Column(unique = true) // ISBN, unikalny
     private String isbn;
 
     private String publisher; // Wydawca (opcjonalnie)
