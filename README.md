@@ -104,24 +104,6 @@ public Borrowing borrowBook(Long userId, Long bookId) {
     LocalDate dueDate = this.loanPolicy.calculateDueDate(borrowDate, book, user); // Wykorzystanie polimorfizmu
     // ...
 }
-
-### Polimorfizm
-
-System wykorzystuje **polimorfizm** poprzez interfejs `LoanPolicy`. Serwis `BorrowingService` operuje na abstrakcji `LoanPolicy`, a konkretne zachowanie (sposób obliczania daty zwrotu) jest determinowane przez rzeczywisty typ obiektu (np. `StandardLoanPolicy`, `AcademicLoanPolicy`) wstrzyknięty w czasie działania aplikacji. To również spełnia wymóg implementacji polimorfizmu w projekcie.
-
-```java
-// W BorrowingService
-private final LoanPolicy loanPolicy;
-
-public BorrowingService(/*...*/, @Qualifier("standardLoanPolicy") LoanPolicy loanPolicy) {
-    this.loanPolicy = loanPolicy;
-}
-
-public Borrowing borrowBook(Long userId, Long bookId) {
-    // ...
-    LocalDate dueDate = this.loanPolicy.calculateDueDate(borrowDate, book, user); // Wykorzystanie polimorfizmu
-    // ...
-}
 ```
 
 ## 🔐 System autoryzacji (RBAC)
@@ -282,13 +264,13 @@ Schemat bazy danych jest zarządzany przez Flyway. Pierwsza migracja (`V1__Creat
 
 Główne pliki konfiguracyjne projektu:
 
-* **`application.properties` (`src/main/resources/application.properties`)**:
+* **`application.properties`**:
     * Zawiera podstawową konfigurację aplikacji Spring Boot.
     * Definiuje placeholdery dla danych dostępowych do bazy danych (np. `${SPRING_DATASOURCE_URL}`), które są dostarczane przez zmienne środowiskowe podczas uruchamiania z Docker Compose.
     * Ustawia `spring.jpa.hibernate.ddl-auto` na `validate` (lub wartość domyślną przekazaną przez zmienną środowiskową), co oznacza, że Hibernate weryfikuje zgodność schematu bazy danych (stworzonego przez Flyway) z encjami JPA.
     * Konfiguruje `spring.flyway.enabled=true`, aby aktywować zarządzanie migracjami bazy danych przez Flyway.
 
-* **`docker-compose.yml` (główny katalog projektu)**:
+* **`docker-compose.yml`**:
     * Definiuje serwisy Dockerowe dla aplikacji (`app`) oraz bazy danych PostgreSQL (`db`).
     * Określa obrazy Dockerowe, mapowania portów (np. `8080:8080` dla aplikacji, `5432:5432` dla bazy danych).
     * Ustawia zmienne środowiskowe dla kontenera aplikacji, w tym dane dostępowe do bazy danych (`SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/library_system_db`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`) oraz `SPRING_JPA_HIBERNATE_DDL_AUTO=validate`.
